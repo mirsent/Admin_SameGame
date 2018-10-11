@@ -32,4 +32,24 @@ class ProjectController extends Controller {
         }
         ajax_return(0, '参数不合法');
     }
+
+    /**
+     * 删除项目
+     * @param project_id 项目Id
+     * @todo 判断下面是否有任务
+     */
+    public function delete_project()
+    {
+        $projectId = I('project_id');
+
+        if ($projectId) {
+            $res = D('Project')->deleteProject($projectId);
+            if ($res === false) {
+                ajax_return(0, '删除项目出错');
+            }
+            ajax_return(1, '删除项目成功');
+        }
+
+        ajax_return(0, '参数不合法');
+    }
 }
