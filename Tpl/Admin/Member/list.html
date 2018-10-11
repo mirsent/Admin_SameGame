@@ -1,0 +1,237 @@
+<extend name="Public/base" />
+<block name="css">
+    <link rel="stylesheet" href="__STATICS__/bootstrap-fileinput/css/fileinput.min.css">
+    <style type="text/css">
+        .file-preview{
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+        .file-drop-zone{
+            margin: 0;
+            padding: 0;
+        }
+        .file-drop-zone,
+        .file-drop-zone.clickable:hover{
+            border: none;
+        }
+        .krajee-default.file-preview-frame:not(.file-preview-error):hover{
+            box-shadow: 1px 1px 5px 0 #a2958a;
+        }
+        .krajee-default.file-preview-frame .file-thumbnail-fsublimelinter-phpooter{
+            height: 40px;
+        }
+        .krajee-default.file-preview-frame .kv-file-content{
+            height: 80px;
+        }
+        .krajee-default .file-footer-caption{
+            height: 0;
+            margin: 0;
+        }
+    </style>
+</block>
+<block name="header">会员列表</block>
+<block name="btn">
+    <button type="button" class="btn btn-default" id="edit"><i class="fa fa-edit fa-fw"></i>编辑</button>
+    <button type="button" class="btn btn-default" id="delete"><i class="fa fa-trash-o fa-fw"></i>删除</button>
+</block>
+<block name="content">
+    <table class="table table-bordered table-striped table-hover table-single">
+        <thead>
+            <tr>
+                <th>用户名</th>
+                <th width="120px">头像</th>
+                <th>邮箱</th>
+                <th>创建的团队</th>
+                <th>加入的团队</th>
+                <th>注册时间</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+    <script type="text/html" id="actionModal">
+        <form class="layui-form" id="actionForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">用户名</label>
+                <div class="layui-input-block">
+                    <input type="text" name="member_name" lay-verify="required" placeholder="请输入用户名" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">邮箱</label>
+                <div class="layui-input-block">
+                    <input type="text" name="mail" lay-verify="required" placeholder="请输入邮箱" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+
+            <input type="hidden" name="id">
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button type="button" class="layui-btn" lay-submit lay-filter="submit">立即提交</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </script>
+</block>
+<block name="js">
+    <script src="__STATICS__/bootstrap-fileinput/js/fileinput.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            oTable = $(".table").DataTable({
+                ajax: function(data, callback, settings) {
+                    param = {
+                        draw: data.draw,
+                        limit: data.length,
+                        start: data.start,
+                        page: (data.start / data.length) + 1,
+                        order: data.order,
+                        search: $('.fuzzy-search').val(),
+                        member_name: $('.search-name').val(),
+                        mail: $('.search-mail').val(),
+                        search_date: $('.search-date').val()
+                    };
+                    $.ajax({
+                        type: "POST",
+                        url: "{:U('Member/get_user_info')}",
+                        data: param,
+                        dataType: "json",
+                        success: function(result) {
+                            callback(result);
+                        }
+                    });
+                },
+                columns: [
+                    { "data": "member_name" },
+                    {
+                        "data": "member_head",
+                        "class": "text-center",
+                        "orderable": false,
+                        "render": function (data,type,full,meta) {
+                            if (data) {
+                                return '<input type="file" id="changePic'+full.id+'" />';
+                            } else {
+                                return '<input type="file" id="uploadPic'+full.id+'" />'
+                            }
+                        }
+                    },
+                    { "data": "mail" },
+                    {
+                        "data": "team_create",
+                        "orderable": false,
+                    },
+                    {
+                        "data": "team_join",
+                        "orderable": false,
+                    },
+                    { "data": "register_time" },
+                    DT.COLUMN.STATUS
+                ],
+                initComplete: function(settings, json) {
+                    // 高级搜索
+                    var advancedHtml = '<form class="layui-form search-box">';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="用户名" class="layui-input search-name"></div> ';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="邮箱" class="layui-input search-mail"></div> ';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="注册日期" class="layui-input search-date"></div> ';
+                    advancedHtml += '<button type="button" class="btn btn-default" id="advancedSearch"><i class="fa fa-search fa-fw"></i>查询</button></form>';
+
+                    $('.search-item').append(DTSearchGroup);
+                    $('#searchCollapse').append(advancedHtml);
+                    layui.use(['form','laydate'], function(){
+                        var form = layui.form,
+                            laydate = layui.laydate;
+                        laydate.render({elem: '.search-date'})
+                        form.render();
+                    })
+                },
+                rowCallback: function( row, data, index ){
+                    setTimeout(function(){
+                        // 上传头像
+                        var oFileInput = new FileInput();
+                        oFileInput.Init("uploadPic"+data.id, "{:U('Member/upload_member')}");
+                        $('#uploadPic'+data.id).fileinput('refresh', {
+                            showUpload: true,
+                            showRemove: false,
+                            uploadLabel: '',
+                            browseLabel: '上传头像',
+                            browseClass: 'btn btn-info',
+                            browseIcon: '',
+                            uploadExtraData: function (previewId, index){
+                                return data = oTable.row('.selected').data();
+                            }
+                        }).on("filebatchuploadsuccess", function (event, data, previewId, index) {
+                            if (data.response.status == 1) {
+                                toastr["success"]("上传头像成功", "");
+                                DTdraw(oTable);
+                            }
+                        });
+
+                        // 更换头像
+                        $("#changePic"+data.id).fileinput({
+                            uploadUrl: "{:U('Member/upload_member')}",
+                            overwriteInitial: true,
+                            showClose: false,
+                            showRemove: false,
+                            showCaption: false,
+                            showUpload: true,
+                            browseLabel: '更换头像',
+                            browseClass: 'btn btn-default',
+                            browseIcon: '',
+                            layoutTemplates:{
+                                actionUpload: ''
+                            },
+                            initialPreview: '<img src="'+data.member_head+'" class="kv-preview-data file-preview-image">',
+                            initialPreviewConfig: [{key: data.id}],
+                            uploadExtraData: {id: data.id},
+                            deleteUrl: "{:U('Member/delete_member_head')}",
+                        }).on('fileuploaded', function(event, data, previewId, index){
+                            toastr["success"]("更换头像成功", "");
+                            DTdraw(oTable);
+                        }).on('filedeleted', function(event, key, jqXHR, data){
+                            toastr["success"]("删除头像成功", "");
+                            DTdraw(oTable);
+                        });
+                    },1)
+                }
+            });
+        });
+
+        /************************* document ready end *****************************/
+
+        layui.use(['layer', 'form', 'laydate'], function() {
+            var layer = layui.layer,
+                laydate = layui.laydate,
+                form = layui.form;
+
+            // 编辑
+            $('#edit').on('click', function() {
+                getSelectedData(oTable, function(data){
+                    layui_form('修改会员信息', function(){
+                        dataToForm('actionForm', data);
+                        form.render();
+                    });
+                });
+            });
+
+            // 提交
+            form.on('submit(submit)', function(data) {
+                submit_form("{:U('Member/edit_member')}");
+            });
+        });
+
+        // 删除
+        $('#delete').on('click', function() {
+            getSelectedData(oTable, function(data){
+                var title = '确认删除会员 "' + data['member_name'] + '" ?';
+                set_status(title, "{:U('Member/delete_member')}", {
+                    id: data.id
+                });
+            });
+        });
+    </script>
+</block>

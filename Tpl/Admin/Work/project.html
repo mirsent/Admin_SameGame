@@ -1,0 +1,194 @@
+<extend name="Public/base" />
+<block name="css">
+
+</block>
+<block name="header">项目列表</block>
+<block name="btn">
+    <button type="button" class="btn btn-default" id="edit"><i class="fa fa-edit fa-fw"></i>编辑</button>
+    <button type="button" class="btn btn-default" id="delete"><i class="fa fa-trash-o fa-fw"></i>删除</button>
+</block>
+<block name="content">
+    <table class="table table-bordered table-striped table-hover table-single">
+        <thead>
+            <tr>
+                <th>项目名称</th>
+                <th>类型</th>
+                <th>描述</th>
+                <th>成员</th>
+                <th>发布人</th>
+                <th>发布时间</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+    <script type="text/html" id="actionModal">
+        <form class="layui-form" id="actionForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">项目名称</label>
+                <div class="layui-input-block">
+                    <input type="text" name="project_name" lay-verify="required" placeholder="请输入项目名称" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">类型</label>
+                <div class="layui-input-block">
+                    <select name="project_type_id" lay-verify="required">
+                        <option value=""></option>
+                        <foreach name="projectType" item="v">
+                            <option value="{$v.id}">{$v.project_type_name}</option>
+                        </foreach>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">描述</label>
+                <div class="layui-input-block">
+                    <textarea name="project_desc" placeholder="请输入描述" class="layui-textarea"></textarea>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">团队</label>
+                <div class="layui-input-block">
+                    <select name="team_uuid" lay-verify="required">
+                        <option value=""></option>
+                        <foreach name="team" item="v">
+                            <option value="{$v.team_uuid}">{$v.team_name}</option>
+                        </foreach>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">成员</label>
+                <div class="layui-input-block data-member">
+
+                </div>
+            </div>
+
+            <input type="hidden" name="id">
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button type="button" class="layui-btn" lay-submit lay-filter="submit">立即提交</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </script>
+</block>
+<block name="js">
+    <script src="__STATICS__/bootstrap-fileinput/js/fileinput.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            oTable = $(".table").DataTable({
+                ajax: function(data, callback, settings) {
+                    param = {
+                        draw: data.draw,
+                        limit: data.length,
+                        start: data.start,
+                        page: (data.start / data.length) + 1,
+                        order: data.order,
+                        search: $('.fuzzy-search').val(),
+                        project_name: $('.search-name').val(),
+                        project_type_id: $('.search-type').val(),
+                        create_at: $('.search-date').val()
+                    };
+                    $.ajax({
+                        type: "POST",
+                        url: "{:U('Project/get_project_info')}",
+                        data: param,
+                        dataType: "json",
+                        success: function(result) {
+                            callback(result);
+                        }
+                    });
+                },
+                columns: [
+                    { "data": "project_name" },
+                    { "data": "project_type_name" },
+                    {
+                        "data": "project_desc",
+                        "orderable": false,
+                    },
+                    {
+                        "data": "project_members",
+                        "orderable": false,
+                    },
+                    { "data": "project_publisher" },
+                    { "data": "publish_time" },
+                    DT.COLUMN.STATUS
+                ],
+                initComplete: function(settings, json) {
+                    // 高级搜索
+                    var advancedHtml = '<form class="layui-form search-box">';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="项目名称" class="layui-input search-name"></div> ';
+                    advancedHtml += '<div class="layui-inline"><select class="search-type"><option value="">项目类型</option><foreach name="projectType" item="v"> <option value="{$v.id}">{$v.project_type_name}</option> </foreach></select></div> ';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="发布日期" class="layui-input search-date"></div> ';
+                    advancedHtml += '<button type="button" class="btn btn-default" id="advancedSearch"><i class="fa fa-search fa-fw"></i>查询</button></form>';
+
+                    $('.search-item').append(DTSearchGroup);
+                    $('#searchCollapse').append(advancedHtml);
+                    layui.use(['form','laydate'], function(){
+                        var form = layui.form,
+                            laydate = layui.laydate;
+                        laydate.render({elem: '.search-date'})
+                        form.render();
+                    })
+                }
+            });
+        });
+
+        /************************* document ready end *****************************/
+
+        layui.use(['layer', 'form', 'laydate'], function() {
+            var layer = layui.layer,
+                laydate = layui.laydate,
+                form = layui.form;
+
+            // 编辑
+            $('#edit').on('click', function() {
+                getSelectedData(oTable, function(formData){
+                    layui_form('修改项目信息', function(){
+                        $.ajax({
+                            type: "POST",
+                            url: "{:U('Team/get_member_by_team')}",
+                            data: {
+                                team_uuid: formData.team_uuid
+                            },
+                            dataType:"json",
+                            success: function(result) {
+                                if (result.status == 1) {
+                                    var sOut = '';
+                                    for (var i = 0; i < result.data.length; i++) {
+                                        sOut += '<input type="checkbox" name="project_member_ids[]" value="'+result.data[i]['id']+'" title="'+result.data[i]['member_name']+'" lay-skin="primary">'
+                                    }
+                                    $('.data-member').html(sOut);
+                                    dataToForm('actionForm', formData);
+                                    form.render();
+                                }
+                            }
+                        });
+                    });
+                });
+            });
+
+            // 提交
+            form.on('submit(submit)', function(data) {
+                submit_form("{:U('Project/edit_project')}");
+            });
+        });
+
+        // 删除
+        $('#delete').on('click', function() {
+            getSelectedData(oTable, function(data){
+                var title = '确认删除项目 "' + data['project_name'] + '" ?';
+                set_status(title, "{:U('Project/delete_project')}", {
+                    id: data.id,
+                });
+            });
+        });
+    </script>
+</block>

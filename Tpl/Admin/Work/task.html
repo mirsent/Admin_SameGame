@@ -1,0 +1,221 @@
+<extend name="Public/base" />
+<block name="css">
+
+</block>
+<block name="header">任务列表</block>
+<block name="btn">
+    <button type="button" class="btn btn-default" id="edit"><i class="fa fa-edit fa-fw"></i>编辑</button>
+    <button type="button" class="btn btn-default" id="delete"><i class="fa fa-trash-o fa-fw"></i>删除</button>
+</block>
+<block name="content">
+    <table class="table table-bordered table-striped table-hover table-single">
+        <thead>
+            <tr>
+                <th>所属项目</th>
+                <th>任务名称</th>
+                <th>执行人</th>
+                <th>发布人</th>
+                <th>发布时间</th>
+                <th>截止时间</th>
+                <th>完成时间</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+    <script type="text/html" id="actionModal">
+        <form class="layui-form" id="actionForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">项目</label>
+                <div class="layui-input-block">
+                    <select name="project_id" class="data-project" lay-verify="required">
+                        <option value=""></option>
+
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">任务</label>
+                <div class="layui-input-block">
+                    <input type="text" name="task_name" lay-verify="required" placeholder="请输入任务名称" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">执行人</label>
+                <div class="layui-input-block">
+                    <select name="task_executive_id" class="data-executive" lay-verify="required">
+                        <option value=""></option>
+
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">发布人</label>
+                <div class="layui-input-block">
+                    <select name="task_publisher_id" class="data-publisher" lay-verify="required">
+                        <option value=""></option>
+
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">截止时间</label>
+                <div class="layui-input-block">
+                    <input type="text" name="deadline_time" lay-verify="required" placeholder="请选择时间" autocomplete="off" class="layui-input picker-time">
+                </div>
+            </div>
+
+            <input type="hidden" name="id">
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button type="button" class="layui-btn" lay-submit lay-filter="submit">立即提交</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </script>
+</block>
+<block name="js">
+    <script src="__STATICS__/bootstrap-fileinput/js/fileinput.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            oTable = $(".table").DataTable({
+                ajax: function(data, callback, settings) {
+                    param = {
+                        draw: data.draw,
+                        limit: data.length,
+                        start: data.start,
+                        page: (data.start / data.length) + 1,
+                        order: data.order,
+                        search: $('.fuzzy-search').val(),
+                        project_name: $('.search-project').val(),
+                        task_name: $('.search-task').val(),
+                        publish_time: $('.search-date-publish').val(),
+                        deadline_time: $('.search-date-deadline').val()
+                    };
+                    $.ajax({
+                        type: "POST",
+                        url: "{:U('Task/get_task_info')}",
+                        data: param,
+                        dataType: "json",
+                        success: function(result) {
+                            callback(result);
+                        }
+                    });
+                },
+                columns: [
+                    { "data": "project_name" },
+                    { "data": "task_name" },
+                    { "data": "task_executive" },
+                    { "data": "task_publisher" },
+                    { "data": "publish_time" },
+                    { "data": "deadline_time" },
+                    { "data": "complete_time" },
+                    {
+                        "data": "status",
+                        "render":function (data,type,full,meta) {
+                            switch (parseInt(data)) {
+                                case TASK_I:
+                                    return '<span class="text-info">进行中</span>'
+                                    break;
+                                case TASK_F:
+                                    return '<span class="text-success">已完成</span>'
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                ],
+                initComplete: function(settings, json) {
+                    // 高级搜索
+                    var advancedHtml = '<form class="layui-form search-box">';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="所属项目" class="layui-input search-project"></div> ';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="任务名称" class="layui-input search-task"></div> ';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="发布日期" class="layui-input picker-date search-date-publish"></div> ';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="截至日期" class="layui-input picker-date search-date-deadline"></div> ';
+                    advancedHtml += '<button type="button" class="btn btn-default" id="advancedSearch"><i class="fa fa-search fa-fw"></i>查询</button></form>';
+
+                    $('.search-item').append(DTSearchGroup);
+                    $('#searchCollapse').append(advancedHtml);
+                    layui.use(['form','laydate'], function(){
+                        var form = layui.form,
+                            laydate = layui.laydate;
+                        lay('.picker-date').each(function(){
+                            laydate.render({
+                                elem: this
+                            });
+                        });
+                        form.render();
+                    })
+                }
+            });
+        });
+
+        /************************* document ready end *****************************/
+
+        layui.use(['layer', 'form', 'laydate'], function() {
+            var layer = layui.layer,
+                laydate = layui.laydate,
+                form = layui.form;
+
+            // 编辑
+            $('#edit').on('click', function() {
+                getSelectedData(oTable, function(formData){
+                    layui_form('修改任务信息', function(){
+                        $.ajax({
+                            type: "POST",
+                            url: "{:U('Team/get_project_member_by_team')}",
+                            data: {
+                                team_uuid: formData.team_uuid
+                            },
+                            dataType:"json",
+                            success: function(result) {
+                                if (result.status == 1) {
+                                    var sProject = '',
+                                        sMember = '',
+                                        project = result.data.project,
+                                        member = result.data.member;
+                                    for (var i = 0; i < project.length; i++) {
+                                        sProject += '<option value="'+project[i]['id']+'">'+project[i]['project_name']+'</option>'
+                                    }
+                                    for (var i = 0; i < member.length; i++) {
+                                        sMember += '<option value="'+member[i]['id']+'">'+member[i]['member_name']+'</option>';
+                                    }
+                                    $('.data-project').html(sProject);
+                                    $('.data-executive').html(sMember);
+                                    $('.data-publisher').html(sMember);
+                                    dataToForm('actionForm', formData);
+                                    laydate.render({
+                                        elem: '.picker-time',
+                                        type: 'datetime'
+                                    })
+                                    form.render();
+                                }
+                            }
+                        });
+                    });
+                });
+            });
+
+            // 提交
+            form.on('submit(submit)', function(data) {
+                submit_form("{:U('Task/edit_task')}");
+            });
+        });
+
+        // 删除
+        $('#delete').on('click', function() {
+            getSelectedData(oTable, function(data){
+                var title = '确认删除任务 "' + data['task_name'] + '" ?';
+                set_status(title, "{:U('Task/delete_task')}", {
+                    id: data.id,
+                });
+            });
+        });
+    </script>
+</block>

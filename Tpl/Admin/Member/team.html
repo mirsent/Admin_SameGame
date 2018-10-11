@@ -1,0 +1,160 @@
+<extend name="Public/base" />
+<block name="css">
+
+</block>
+<block name="header">团队列表</block>
+<block name="btn">
+    <button type="button" class="btn btn-default" id="edit"><i class="fa fa-edit fa-fw"></i>编辑</button>
+    <button type="button" class="btn btn-default" id="delete"><i class="fa fa-trash-o fa-fw"></i>删除</button>
+</block>
+<block name="content">
+    <table class="table table-bordered table-striped table-hover table-single">
+        <thead>
+            <tr>
+                <th>团队名称</th>
+                <th>成员</th>
+                <th>创建人</th>
+                <th>创建时间</th>
+                <th>状态</th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+
+    <script type="text/html" id="actionModal">
+        <form class="layui-form" id="actionForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">团队名称</label>
+                <div class="layui-input-block">
+                    <input type="text" name="team_name" lay-verify="required" placeholder="请输入团队名称" autocomplete="off" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">成员</label>
+                <div class="layui-input-block data-member">
+
+                </div>
+            </div>
+
+            <input type="hidden" name="id">
+
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button type="button" class="layui-btn" lay-submit lay-filter="submit">立即提交</button>
+                    <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                </div>
+            </div>
+        </form>
+    </script>
+</block>
+<block name="js">
+    <script type="text/javascript">
+        $(document).ready(function() {
+            oTable = $(".table").DataTable({
+                ajax: function(data, callback, settings) {
+                    param = {
+                        draw: data.draw,
+                        limit: data.length,
+                        start: data.start,
+                        page: (data.start / data.length) + 1,
+                        order: data.order,
+                        search: $('.fuzzy-search').val(),
+                        team_name: $('.search-team').val(),
+                        member_name: $('.search-member').val(),
+                        found_time: $('.search-date').val(),
+                    };
+                    $.ajax({
+                        type: "POST",
+                        url: "{:U('Member/get_team_info')}",
+                        data: param,
+                        dataType: "json",
+                        success: function(result) {
+                            callback(result);
+                        }
+                    });
+                },
+                columns: [
+                    { "data": "team_name" },
+                    { "data": "members" },
+                    { "data": "founder" },
+                    { "data": "found_time" },
+                    DT.COLUMN.STATUS
+                ],
+                initComplete: function(settings, json) {
+                    // 高级搜索
+                    var advancedHtml = '<form class="layui-form search-box">';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="团队名称" class="layui-input search-team"></div> ';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="创建人" class="layui-input search-member"></div> ';
+                    advancedHtml += '<div class="layui-inline"><input type="text" placeholder="创建日期" class="layui-input picker-date search-date"></div> ';
+                    advancedHtml += '<button type="button" class="btn btn-default" id="advancedSearch"><i class="fa fa-search fa-fw"></i>查询</button></form>';
+
+                    $('.search-item').append(DTSearchGroup);
+                    $('#searchCollapse').append(advancedHtml);
+                    layui.use(['form','laydate'], function(){
+                        var form = layui.form,
+                            laydate = layui.laydate;
+                        lay('.picker-date').each(function(){
+                            laydate.render({
+                                elem: this
+                            });
+                        });
+                        form.render();
+                    })
+                }
+            });
+        });
+
+        /************************* document ready end *****************************/
+
+        layui.use(['layer', 'form', 'laydate'], function() {
+            var layer = layui.layer,
+                laydate = layui.laydate,
+                form = layui.form;
+
+            // 编辑
+            $('#edit').on('click', function() {
+                getSelectedData(oTable, function(formData){
+                    layui_form('修改团队信息', function(){
+                        $.ajax({
+                            type: "POST",
+                            url: "{:U('Team/get_member_by_team')}",
+                            data: {
+                                team_uuid: formData.team_uuid
+                            },
+                            dataType:"json",
+                            success: function(result) {
+                                if (result.status == 1) {
+                                    var sMember = '',
+                                        member = result.data;
+                                    for (var i = 0; i < member.length; i++) {
+                                        sMember += '<input type="checkbox" name="member_ids[]" value="'+member[i]['id']+'" title="'+member[i]['member_name']+'" lay-skin="primary">';
+                                    }
+                                    $('.data-member').html(sMember);
+                                    dataToForm('actionForm', formData);
+                                    form.render();
+                                }
+                            }
+                        });
+                    });
+                });
+            });
+
+            // 提交
+            form.on('submit(submit)', function(data) {
+                submit_form("{:U('Member/edit_team')}");
+            });
+        });
+
+        // 删除
+        $('#delete').on('click', function() {
+            getSelectedData(oTable, function(data){
+                var title = '确认删除团队 "' + data['team_name'] + '" ?';
+                set_status(title, "{:U('Member/delete_team')}", {
+                    id: data.id
+                });
+            });
+        });
+    </script>
+</block>
