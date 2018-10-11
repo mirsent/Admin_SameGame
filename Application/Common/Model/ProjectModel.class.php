@@ -58,6 +58,22 @@ class ProjectModel extends BaseModel{
     }
 
     /**
+     * 获取项目详情
+     */
+    public function getProjectDetail($projectId)
+    {
+        $cond['p.id'] = $projectId;
+        $data = $this
+            ->alias('p')
+            ->join('__PROJECT_TYPE__ pt ON pt.id = p.project_type_id')
+            ->join('__MEMBER__ m ON m.id = p.project_publisher_id')
+            ->field('p.*,project_type_name,member_name as project_publisher')
+            ->where($cond)
+            ->find();
+        return $data;
+    }
+
+    /**
      * 修改项目
      */
     public function editProject($cond, $data)
