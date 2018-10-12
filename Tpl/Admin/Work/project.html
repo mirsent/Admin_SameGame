@@ -12,7 +12,6 @@
         <thead>
             <tr>
                 <th>项目名称</th>
-                <th>类型</th>
                 <th>描述</th>
                 <th>成员</th>
                 <th>发布人</th>
@@ -31,17 +30,6 @@
                 <label class="layui-form-label">项目名称</label>
                 <div class="layui-input-block">
                     <input type="text" name="project_name" lay-verify="required" placeholder="请输入项目名称" autocomplete="off" class="layui-input">
-                </div>
-            </div>
-            <div class="layui-form-item">
-                <label class="layui-form-label">类型</label>
-                <div class="layui-input-block">
-                    <select name="project_type_id" lay-verify="required">
-                        <option value=""></option>
-                        <foreach name="projectType" item="v">
-                            <option value="{$v.id}">{$v.project_type_name}</option>
-                        </foreach>
-                    </select>
                 </div>
             </div>
             <div class="layui-form-item layui-form-text">
@@ -108,7 +96,6 @@
                 },
                 columns: [
                     { "data": "project_name" },
-                    { "data": "project_type_name" },
                     {
                         "data": "project_desc",
                         "orderable": false,
@@ -125,7 +112,6 @@
                     // 高级搜索
                     var advancedHtml = '<form class="layui-form search-box">';
                     advancedHtml += '<div class="layui-inline"><input type="text" placeholder="项目名称" class="layui-input search-name"></div> ';
-                    advancedHtml += '<div class="layui-inline"><select class="search-type"><option value="">项目类型</option><foreach name="projectType" item="v"> <option value="{$v.id}">{$v.project_type_name}</option> </foreach></select></div> ';
                     advancedHtml += '<div class="layui-inline"><input type="text" placeholder="发布日期" class="layui-input search-date"></div> ';
                     advancedHtml += '<button type="button" class="btn btn-default" id="advancedSearch"><i class="fa fa-search fa-fw"></i>查询</button></form>';
 

@@ -17,13 +17,11 @@ class ProjectController extends AdminBaseController{
         // 搜索
         $search = I('search');
         $searchName = I('project_name');
-        $searchType = I('project_type_id');
         $searchDate = I('publish_time');
         if (strlen($search)>0) {
-            $cond['project_name|project_type_name|project_desc'] = array('like', '%'.$search.'%');
+            $cond['project_name|project_desc'] = array('like', '%'.$search.'%');
         }
         if ($searchName) $cond['project_name'] = $searchName;
-        if ($searchType) $cond['project_type_id'] = $searchType;
         if ($searchDate) $cond['publish_time'] = array('between', [$searchDate.' 00:00:01', $searchDate.' 23:59:59']);
 
         $recordsFiltered = $ms->getProjectNumber($cond);
@@ -36,10 +34,9 @@ class ProjectController extends AdminBaseController{
             $i = intval($orderColumn);
             switch($i){
                 case 0: $ms->order('project_name '.$orderDir); break;
-                case 1: $ms->order('project_type_name '.$orderDir); break;
-                case 4: $ms->order('project_publisher '.$orderDir); break;
-                case 5: $ms->order('publish_time '.$orderDir); break;
-                case 6: $ms->order('status '.$orderDir); break;
+                case 3: $ms->order('project_publisher '.$orderDir); break;
+                case 4: $ms->order('publish_time '.$orderDir); break;
+                case 5: $ms->order('status '.$orderDir); break;
                 default: break;
             }
         } else {

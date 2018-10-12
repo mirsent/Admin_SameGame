@@ -28,7 +28,6 @@ class ProjectModel extends BaseModel{
     {
         $data = $this
             ->alias('p')
-            ->join('__PROJECT_TYPE__ pt ON pt.id = p.project_type_id')
             ->join('__MEMBER__ m ON m.id = p.project_publisher_id')
             ->where($cond)
             ->count();
@@ -42,9 +41,8 @@ class ProjectModel extends BaseModel{
     {
         $data = $this
             ->alias('p')
-            ->join('__PROJECT_TYPE__ pt ON pt.id = p.project_type_id')
             ->join('__MEMBER__ m ON m.id = p.project_publisher_id')
-            ->field('p.*,project_type_name,member_name as project_publisher')
+            ->field('p.*,member_name as project_publisher')
             ->where($cond)
             ->select();
         $member = D('Member');
@@ -66,9 +64,8 @@ class ProjectModel extends BaseModel{
         $cond['p.id'] = $projectId;
         $data = $this
             ->alias('p')
-            ->join('__PROJECT_TYPE__ pt ON pt.id = p.project_type_id')
             ->join('__MEMBER__ m ON m.id = p.project_publisher_id')
-            ->field('p.*,project_type_name,member_name as project_publisher')
+            ->field('p.*,member_name as project_publisher')
             ->where($cond)
             ->find();
         return $data;
