@@ -38,12 +38,13 @@ class TaskController extends AdminBaseController{
             switch($i){
                 case 0: $ms->order('project_name '.$orderDir); break;
                 case 1: $ms->order('task_name '.$orderDir); break;
-                case 2: $ms->order('executive.member_name '.$orderDir); break;
-                case 3: $ms->order('publisher.member_name '.$orderDir); break;
-                case 4: $ms->order('publish_time '.$orderDir); break;
-                case 5: $ms->order('deadline_time '.$orderDir); break;
-                case 6: $ms->order('complete_time '.$orderDir); break;
-                case 7: $ms->order('status '.$orderDir); break;
+                case 2: $ms->order('difficult '.$orderDir); break;
+                case 3: $ms->order('executive.member_name '.$orderDir); break;
+                case 4: $ms->order('publisher.member_name '.$orderDir); break;
+                case 5: $ms->order('publish_time '.$orderDir); break;
+                case 6: $ms->order('deadline_time '.$orderDir); break;
+                case 7: $ms->order('complete_time '.$orderDir); break;
+                case 8: $ms->order('status '.$orderDir); break;
                 default: break;
             }
         } else {
