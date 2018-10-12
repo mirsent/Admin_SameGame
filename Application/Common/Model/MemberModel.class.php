@@ -16,6 +16,16 @@ class MemberModel extends BaseModel{
     }
 
     /**
+     * 根据id获取会员名称
+     */
+    public function getMemberById($memberId)
+    {
+        $cond['id'] = $memberId;
+        $data = $this->where($cond)->getField('member_name');
+        return $data;
+    }
+
+    /**
      * 获取会员 会员1，会员2
      */
     public function getMemberFieldName($cond='', $field = 'member_name')

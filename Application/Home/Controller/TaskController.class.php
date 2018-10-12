@@ -81,6 +81,18 @@ class TaskController extends Controller {
         if ($res === false) {
             ajax_return(0, '发布任务出错');
         }
+
+        // 记录
+        $data_log = [
+            'team_uuid' => I('team_uuid'),
+            'project_id' => I('project_id'),
+            'operator_id' => I('operator_id'),
+            'operate_content' => '创建了任务',
+            'operate_type' => C('LOG_T'),
+            'object_id' => $res
+        ];
+        D('Log')->addLog($data_log);
+
         ajax_return(1);
     }
 
@@ -95,12 +107,50 @@ class TaskController extends Controller {
         if ($taskId) {
             $cond['id'] = $taskId;
             $task = M('task');
+
+            $taskOriginal = $task->where($cond)->find(); // 任务原始信息
+
             $task->create();
             $res = $task->where($cond)->save();
 
             if ($res === false) {
                 ajax_return(0, '修改任务出错');
             }
+
+            // 记录
+            if (I('task_name') != $taskOriginal['task_name']) {
+                // 判断任务名称
+                $logArr[] = '将任务“'.$taskOriginal['task_name'].'”修改为“'.I('task_name').'”';
+            }
+            if (I('task_desc') != $taskOriginal['task_desc']) {
+                // 判断任务描述
+                $logArr[] = '编辑了任务描述';
+            }
+            if (I('deadline_time') != $taskOriginal['deadline_time']) {
+                // 判断任务完成时间
+                $logArr[] = '将任务完成时间从“'.$taskOriginal['deadline_time'].'”修改为“'.I('deadline_time').'”';
+            }
+            if (I('task_executive_id') != $taskOriginal['task_executive_id']) {
+                // 判断任务执行人
+                $member = D('Member');
+                $executive = $member->getMemberById(I('task_executive_id'));
+                $executiveOriginal = $member->getMemberById($taskOriginal['task_executive_id']);
+                $logArr[] = '将'.$executive.'的任务指派给了'.$executiveOriginal;
+            }
+
+            $log = D('Log');
+            foreach ($logArr as $logContent) {
+                $data_log = [
+                    'team_uuid' => I('team_uuid'),
+                    'project_id' => I('project_id'),
+                    'operator_id' => I('operator_id'),
+                    'operate_content' => $logContent,
+                    'operate_type' => C('LOG_T'),
+                    'object_id' => $taskId
+                ];
+                $log->addLog($data_log);
+            }
+
             ajax_return(1, '修改任务成功');
         }
 
@@ -120,6 +170,18 @@ class TaskController extends Controller {
             if ($res === false) {
                 ajax_return(0, '删除任务出错');
             }
+
+            // 记录
+            $data_log = [
+                'team_uuid' => I('team_uuid'),
+                'project_id' => I('project_id'),
+                'operator_id' => I('operator_id'),
+                'operate_content' => '删除了任务',
+                'operate_type' => C('LOG_T'),
+                'object_id' => $taskId
+            ];
+            D('Log')->addLog($data_log);
+
             ajax_return(1, '删除任务成功');
         }
 

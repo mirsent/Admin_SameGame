@@ -14,6 +14,16 @@ class BaseModel extends Model{
     }
 
     /**
+     * 获取当前时间
+     */
+    public function get_now_time(){
+        return date('Y-m-d H:i:s');
+    }
+    public function get_now_date(){
+        return date('Y-m-d');
+    }
+
+    /**
      * 修改数据
      * @param   array   $map    where语句数组形式
      * @param   array   $data   数据

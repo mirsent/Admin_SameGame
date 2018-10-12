@@ -23,7 +23,7 @@ class ProjectModel extends BaseModel{
     /**
      * 获取项目数量
      */
-    public function getProjectNumber($cond='')
+    public function getProjectNumber($cond=[])
     {
         $data = $this
             ->alias('p')
@@ -37,7 +37,7 @@ class ProjectModel extends BaseModel{
     /**
      * 获取项目列表
      */
-    public function getProjectData($cond='')
+    public function getProjectData($cond=[])
     {
         $data = $this
             ->alias('p')

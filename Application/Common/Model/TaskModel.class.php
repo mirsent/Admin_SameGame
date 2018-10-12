@@ -10,7 +10,7 @@ class TaskModel extends BaseModel{
     /**
      * 获取任务数量
      */
-    public function getTaskNumber($cond='')
+    public function getTaskNumber($cond=[])
     {
         $data = $this
             ->alias('t')
@@ -25,7 +25,7 @@ class TaskModel extends BaseModel{
     /**
      * 获取任务列表
      */
-    public function getTaskData($cond='')
+    public function getTaskData($cond=[])
     {
         $data = $this
             ->alias('t')
