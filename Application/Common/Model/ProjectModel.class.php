@@ -4,7 +4,8 @@ use Common\Model\BaseModel;
 class ProjectModel extends BaseModel{
 
     protected $_auto=array(
-        array('status','get_default_status',1,'callback')
+        array('status','get_default_status',1,'callback'),
+        array('publish_time','get_now_time',1,'callback'),
     );
 
     /**
@@ -71,6 +72,20 @@ class ProjectModel extends BaseModel{
             ->where($cond)
             ->find();
         return $data;
+    }
+
+    /**
+     * 添加项目
+     */
+    public function addProject($data)
+    {
+        if(!$data = $this->create($data)){
+            return false;
+        }else{
+            $data['project_member_ids'] = implode(',', $data['project_member_ids']);
+            $res = $this->add($data);
+            return $res;
+        }
     }
 
     /**
