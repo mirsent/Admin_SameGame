@@ -3,23 +3,25 @@ namespace Home\Controller;
 use Think\Controller;
 class TaskController extends Controller {
     /**
-     * 获取今日任务列表（完成、未完成）
-     * 按项目分组
+     * 按团队 获取今日任务列表（完成、未完成）
+     * 截止时间倒序
+     * @param int team_uuid 团队uuid
      * @param task_executive_id 执行人ID
      */
     public function get_task_today_list()
     {
         $today = date('Y-m-d');
         $cond = [
-            'status'            => array('neq', C('STATUS_N')),
+            't.status'          => array('neq', C('STATUS_N')),
+            't.team_uuid'       => I('team_uuid'),
             'task_executive_id' => I('task_executive_id'),
             'deadline_time'     => array('between', [$today.' 00:00:01', $today.' 23:59:59'])
         ];
         $data = M('task')
             ->alias('t')
             ->join('__PROJECT__ p ON p.id = t.project_id')
-            ->field('id,project_name,task_name')
-            ->group('project_id')
+            ->field('t.id,task_name,task_desc,difficult,deadline_time,t.status,project_name')
+            ->order('deadline_time desc')
             ->where($cond)
             ->select();
         ajax_return(1, '今日任务列表', $data);
@@ -27,14 +29,15 @@ class TaskController extends Controller {
 
     /**
      * 获取未来任务（未完成）
-     * 按项目分组
+     * @param team_uuid 团队uuid
      * @param task_executive_id 执行人ID
      */
     public function get_task_future_list()
     {
         $tomorrow = date('Y-m-d', strtotime('+1 day'));
         $cond = [
-            'status'            => C('STATUS_Y'),
+            't.status'          => C('STATUS_Y'),
+            't.team_uuid'       => I('team_uuid'),
             'task_executive_id' => I('task_executive_id'),
             'deadline_time'     => array('gt', $tomorrow)
         ];
@@ -42,7 +45,7 @@ class TaskController extends Controller {
             ->alias('t')
             ->join('__PROJECT__ p ON p.id = t.project_id')
             ->field('id,project_name,task_name')
-            ->group('project_id')
+            ->order('deadline_time desc')
             ->where($cond)
             ->select();
         ajax_return(1, '未来任务列表', $data);

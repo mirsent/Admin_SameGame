@@ -14,7 +14,7 @@ class ProjectController extends Controller {
         ];
         $data = M('project')
             ->where($cond)
-            ->field('id,project_name')
+            ->field('id,project_name,datediff(now(), publish_time) as days')
             ->select();
         ajax_return(1, '参与项目列表', $data);
     }
