@@ -26,6 +26,7 @@ class LoginController extends Controller{
     {
         $member = D('Member');
         $member->create();
+        $member->member_name = I('mail');
         $member->password = md5(md5(I('password')));
         $res = $member->add();
 

@@ -20,7 +20,7 @@ class TaskController extends Controller {
         $data = M('task')
             ->alias('t')
             ->join('__PROJECT__ p ON p.id = t.project_id')
-            ->field('t.id,task_name,task_desc,difficult,deadline_time,t.status,project_name')
+            ->field('t.id,task_name,task_desc,difficult,deadline_time,substring(deadline_time,6,5) as deadline_date,t.status,project_name')
             ->order('deadline_time desc')
             ->where($cond)
             ->select();
@@ -189,5 +189,44 @@ class TaskController extends Controller {
         }
 
         ajax_return(0, '参数不合法');
+    }
+
+    /**
+     * 完成任务
+     * @param task_id 任务ID
+     */
+    public function complete_task()
+    {
+
+
+        $cond['id'] = I('task_id');
+        $data = [
+            'status'        => C('TASK_F'),
+            'complete_time' => date('Y-m-d H:i:s')
+        ];
+        $res = M('task')->where($cond)->save($data);
+        if ($res === false) {
+            ajax_return(0, '完成任务失败');
+        }
+        ajax_return(1, '完成任务成功');
+    }
+
+    /**
+     * 取消完成任务
+     * @param task_id 任务ID
+     */
+    public function cancel_task()
+    {
+        $cond['id'] = I('task_id');
+        $data = [
+            'status'        => C('TASK_I'),
+            'complete_time' => null
+        ];
+        $res = M('task')->where($cond)->save($data);
+
+        if ($res === false) {
+            ajax_return(0, '取消完成任务失败');
+        }
+        ajax_return(1, '取消完成任务成功');
     }
 }

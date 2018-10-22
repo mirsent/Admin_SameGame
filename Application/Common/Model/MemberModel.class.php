@@ -47,7 +47,6 @@ class MemberModel extends BaseModel{
             'team_uuid' => $teamuuid
         ];
         $projectMembers = M('team')->where($cond)->getField('member_ids');
-
         $cond_member = [
             'status' => C('STATUS_Y'),
             'id'     => array('in', $projectMembers)
