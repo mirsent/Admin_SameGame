@@ -15,40 +15,66 @@ class TaskController extends Controller {
             't.status'          => array('neq', C('STATUS_N')),
             't.team_uuid'       => I('team_uuid'),
             'task_executive_id' => I('task_executive_id'),
-            'deadline_time'     => array('between', [$today.' 00:00:01', $today.' 23:59:59'])
+            'deadline_time'     => $today
         ];
-        $data = M('task')
+        $list = M('task')
             ->alias('t')
-            ->join('__PROJECT__ p ON p.id = t.project_id')
+            ->join('__PROJECT__ p ON p.id = t.project_id', 'LEFT')
             ->field('t.id,task_name,task_desc,difficult,deadline_time,substring(deadline_time,6,5) as deadline_date,t.status,project_name')
             ->order('deadline_time desc')
             ->where($cond)
             ->select();
+
+        $number_all = count($list); // 总任务数量
+        $status = C('TASK_F');
+        $number_complete = array_count_values(array_column($list, 'status'))[$status]?:0;
+        $rate = intval($number_complete/$number_all*100);
+
+        $data = [
+            'list'            => $list,
+            'number_all'      => $number_all,
+            'number_complete' => $number_complete,
+            'rate'            => $rate
+        ];
+
         ajax_return(1, '今日任务列表', $data);
     }
 
     /**
-     * 获取未来任务（未完成）
+     * 获取其他任务（未完成）
      * @param team_uuid 团队uuid
      * @param task_executive_id 执行人ID
      */
-    public function get_task_future_list()
+    public function get_task_other_list()
     {
-        $tomorrow = date('Y-m-d', strtotime('+1 day'));
+        $today = date('Y-m-d');
         $cond = [
             't.status'          => C('STATUS_Y'),
             't.team_uuid'       => I('team_uuid'),
             'task_executive_id' => I('task_executive_id'),
-            'deadline_time'     => array('gt', $tomorrow)
+            'deadline_time'     => array('neq', $today)
         ];
-        $data = M('task')
+        $list = M('task')
             ->alias('t')
-            ->join('__PROJECT__ p ON p.id = t.project_id')
-            ->field('id,project_name,task_name')
+            ->join('__PROJECT__ p ON p.id = t.project_id', 'LEFT')
+            ->field('t.id,task_name,task_desc,difficult,deadline_time,substring(deadline_time,6,5) as deadline_date,t.status,project_name')
             ->order('deadline_time desc')
             ->where($cond)
             ->select();
-        ajax_return(1, '未来任务列表', $data);
+
+        $number_all = count($list); // 总任务数量
+        $status = C('TASK_F');
+        $number_complete = array_count_values(array_column($list, 'status'))[$status]?:0;
+        $rate = intval($number_complete/$number_all*100);
+
+        $data = [
+            'list'            => $list,
+            'number_all'      => $number_all,
+            'number_complete' => $number_complete,
+            'rate'            => $rate
+        ];
+
+        ajax_return(1, '其他任务列表', $data);
     }
 
     /**
@@ -70,13 +96,14 @@ class TaskController extends Controller {
      * @param team_uuid 团队uuid
      * @param project_id 项目ID
      * @param task_name 任务名字
+     * @param task_desc 任务描述
      * @param task_executive_id 任务执行人ID
      * @param deadline_time 截止时间
      * @param task_publisher_id 任务发布人
      */
     public function add_task()
     {
-        $task = M('task');
+        $task = D('Task');
         $task->create();
         $task->publish_time = date('Y-m-d H:i:s');
         $res = $task->add();
@@ -89,7 +116,7 @@ class TaskController extends Controller {
         $data_log = [
             'team_uuid' => I('team_uuid'),
             'project_id' => I('project_id'),
-            'operator_id' => I('operator_id'),
+            'operator_id' => I('task_publisher_id'),
             'operate_content' => '创建了任务',
             'operate_type' => C('LOG_T'),
             'object_id' => $res
@@ -146,7 +173,7 @@ class TaskController extends Controller {
                 $data_log = [
                     'team_uuid' => I('team_uuid'),
                     'project_id' => I('project_id'),
-                    'operator_id' => I('operator_id'),
+                    'operator_id' => I('task_publisher_id'),
                     'operate_content' => $logContent,
                     'operate_type' => C('LOG_T'),
                     'object_id' => $taskId
