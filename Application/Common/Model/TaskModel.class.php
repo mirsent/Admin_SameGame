@@ -49,8 +49,9 @@ class TaskModel extends BaseModel{
         $data = $this
             ->alias('t')
             ->join('__PROJECT__ p ON p.id = t.project_id', 'LEFT')
-            ->field('t.id,task_name,task_desc,difficult,deadline_time,substring(deadline_time,6,5) as deadline_date,t.status,project_name')
-            ->order('deadline_time desc')
+            ->join('__MEMBER__ executive ON executive.id = t.task_executive_id', 'LEFT') // 执行人
+            ->field('t.id,task_name,task_desc,difficult,deadline_time,DATE_FORMAT(deadline_time,"%m/%d") as deadline_date,t.status,project_name,executive.member_name as executive')
+            ->order('t.status,deadline_time desc')
             ->where($cond)
             ->select();
 

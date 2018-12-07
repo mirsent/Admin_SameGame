@@ -162,14 +162,7 @@ class TaskController extends Controller {
             }
         }
 
-        $data = M('task')
-            ->alias('t')
-            ->join('__PROJECT__ p ON p.id = t.project_id', 'LEFT')
-            ->join('__MEMBER__ executive ON executive.id = t.task_executive_id', 'LEFT') // 执行人
-            ->field('t.id,task_name,task_desc,difficult,deadline_time,substring(deadline_time,6,5) as deadline_date,t.status,project_name,executive.member_name as executive')
-            ->order('t.status,deadline_time asc')
-            ->where($cond)
-            ->select();
+        $data = D('Task')->getTaskList($cond);
 
         ajax_return(1, '任务大厅列表', $data);
     }
