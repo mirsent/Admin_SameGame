@@ -20,6 +20,22 @@ class LoginController extends Controller{
     }
 
     /**
+     * 验证会员
+     */
+    public function check_member()
+    {
+        $cond = [
+            'status' => C('STATUS_Y'),
+            'id'     => I('member_id')
+        ];
+        $res = M('member')->where($cond)->find();
+        if ($res) {
+            ajax_return(1, '允许会员登录');
+        }
+        ajax_return(0, '不允许会员登录');
+    }
+
+    /**
      * 注册会员
      */
     public function register()
@@ -31,9 +47,13 @@ class LoginController extends Controller{
         $res = $member->add();
 
         if ($res === false) {
-            ajax_return(0, '注册会员出错');
+            ajax_return(0, '注册会员失败');
         }
-        ajax_return(1, '注册会员成功');
+        $data = [
+            'id'          => $res,
+            'member_name' => I('mail')
+        ];
+        ajax_return(1, '注册会员成功', $data);
     }
 
     /**

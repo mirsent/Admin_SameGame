@@ -40,6 +40,24 @@ class TeamModel extends BaseModel{
     }
 
     /**
+     * 添加团队
+     */
+    public function addTeam($data)
+    {
+        if(!$data=$this->create($data)){
+            return false;
+        }else{
+            $teamuuid = keyGen();
+            $data['member_ids'] = I('founder_id');
+            $data['team_uuid'] = $teamuuid;
+            $data['team_no'] = substr($teamuuid, -5).rand_number(0,9);
+            $result = $this
+                ->add($data);
+            return $result;
+        }
+    }
+
+    /**
      * 修改团队信息
      */
     public function editTeam($cond, $data)

@@ -2,11 +2,75 @@
 namespace Home\Controller;
 use Think\Controller;
 class TaskController extends Controller {
+
+    /**
+     * 按团队 获取任务列表（完成、未完成）
+     * 截止时间倒序
+     * @param int team_uuid 团队uuid
+     * @param task_executive_id 执行人ID
+     * @return show 是否展开
+     * @return is_finish 是否完成
+     * @return number_all 任务总数量
+     * @return number_complete 任务完成数量
+     * @return rate 任务完成百分比
+     */
+    public function get_task_list()
+    {
+        $task = D('Task');
+
+        $today = date('Y-m-d');
+        $cond_today = $cond_other = [
+            't.status'          => array('neq', C('STATUS_N')),
+            't.team_uuid'       => I('team_uuid'),
+            'task_executive_id' => I('task_executive_id'),
+        ];
+        $cond_today['deadline_time'] = $today;
+        $cond_other['deadline_time'] = array('neq', $today);
+
+        // 已完成
+        $status = C('TASK_F');
+
+        // 今日列表相关
+        $todayList = $task->getTaskList($cond_today);
+        $todayAllN = count($todayList);
+        $todayCompleteN = array_count_values(array_column($todayList, 'status'))[$status]?:0;
+        $todayRate = intval($todayCompleteN/$todayAllN*100);
+
+        $otherList = $task->getTaskList($cond_other);
+        $otherAllN = count($otherList);
+        $otherCompleteN = array_count_values(array_column($otherList, 'status'))[$status]?:0;
+        $otherRate = intval($otherCompleteN/$otherAllN*100);
+
+        $data = [
+            'today' => [
+                'list'            => $todayList,
+                'number_all'      => $todayAllN,
+                'number_complete' => $todayCompleteN,
+                'rate'            => $todayRate
+            ],
+            'other' => [
+                'list'            => $otherList,
+                'number_all'      => $otherAllN,
+                'number_complete' => $otherCompleteN,
+                'rate'            => $otherRate
+            ],
+        ];
+
+        ajax_return(1, '任务列表', $data);
+    }
+
+
+
     /**
      * 按团队 获取今日任务列表（完成、未完成）
      * 截止时间倒序
      * @param int team_uuid 团队uuid
      * @param task_executive_id 执行人ID
+     * @return show 是否展开
+     * @return is_finish 是否完成
+     * @return number_all 任务总数量
+     * @return number_complete 任务完成数量
+     * @return rate 任务完成百分比
      */
     public function get_task_today_list()
     {
@@ -17,13 +81,7 @@ class TaskController extends Controller {
             'task_executive_id' => I('task_executive_id'),
             'deadline_time'     => $today
         ];
-        $list = M('task')
-            ->alias('t')
-            ->join('__PROJECT__ p ON p.id = t.project_id', 'LEFT')
-            ->field('t.id,task_name,task_desc,difficult,deadline_time,substring(deadline_time,6,5) as deadline_date,t.status,project_name')
-            ->order('deadline_time desc')
-            ->where($cond)
-            ->select();
+        $list = D('Task')->getTaskList($cond);
 
         $number_all = count($list); // 总任务数量
         $status = C('TASK_F');
@@ -44,23 +102,22 @@ class TaskController extends Controller {
      * 获取其他任务（未完成）
      * @param team_uuid 团队uuid
      * @param task_executive_id 执行人ID
+     * @return show 是否展开
+     * @return is_finish 是否完成
+     * @return number_all 任务总数量
+     * @return number_complete 任务完成数量
+     * @return rate 任务完成百分比
      */
     public function get_task_other_list()
     {
         $today = date('Y-m-d');
         $cond = [
-            't.status'          => C('STATUS_Y'),
+            't.status'          => array('neq', C('STATUS_N')),
             't.team_uuid'       => I('team_uuid'),
             'task_executive_id' => I('task_executive_id'),
             'deadline_time'     => array('neq', $today)
         ];
-        $list = M('task')
-            ->alias('t')
-            ->join('__PROJECT__ p ON p.id = t.project_id', 'LEFT')
-            ->field('t.id,task_name,task_desc,difficult,deadline_time,substring(deadline_time,6,5) as deadline_date,t.status,project_name')
-            ->order('deadline_time desc')
-            ->where($cond)
-            ->select();
+        $list = D('Task')->getTaskList($cond);
 
         $number_all = count($list); // 总任务数量
         $status = C('TASK_F');
@@ -75,6 +132,46 @@ class TaskController extends Controller {
         ];
 
         ajax_return(1, '其他任务列表', $data);
+    }
+
+    /**
+     * 获取任务大厅所有任务
+     * @param type 1：今日任务 2：其他
+     * @param team_uuid 团队uuid
+     */
+    public function get_task_hall()
+    {
+        $cond = [
+            't.status'    => array('neq', C('STATUS_N')),
+            't.team_uuid' => I('team_uuid'),
+        ];
+
+        $type = I('type');
+        if ($type) {
+            switch ($type) {
+                case '1':
+                    $cond['deadline_time'] = date('Y-m-d');
+                    break;
+
+                case '2':
+                    $cond['deadline_time'] = array('neq', date('Y-m-d'));
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        $data = M('task')
+            ->alias('t')
+            ->join('__PROJECT__ p ON p.id = t.project_id', 'LEFT')
+            ->join('__MEMBER__ executive ON executive.id = t.task_executive_id', 'LEFT') // 执行人
+            ->field('t.id,task_name,task_desc,difficult,deadline_time,substring(deadline_time,6,5) as deadline_date,t.status,project_name,executive.member_name as executive')
+            ->order('t.status,deadline_time asc')
+            ->where($cond)
+            ->select();
+
+        ajax_return(1, '任务大厅列表', $data);
     }
 
     /**
@@ -124,6 +221,23 @@ class TaskController extends Controller {
         D('Log')->addLog($data_log);
 
         ajax_return(1);
+    }
+
+    /**
+     * 领取任务
+     * @param member_id 领取人ID
+     * @param task_id 任务ID
+     */
+    public function receive_task()
+    {
+        $cond['id'] = I('task_id');
+        $data['task_executive_id'] = I('member_id');
+        $res = M('task')->where($cond)->save($data);
+
+        if ($res === false) {
+            ajax_return(0, '任务跑丢了，请稍后重试');
+        }
+        ajax_return(1, '领取成功');
     }
 
     /**
