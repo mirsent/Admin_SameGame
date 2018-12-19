@@ -62,14 +62,14 @@
                 focusCleanup: true,
                 onfocusout: function(element) { $(element).valid(); },
                 rules : {
-                    job_number: {
+                    user_name: {
                         remote:{
                             url: "{:U('Login/check_user')}",
                             type: "post",
                             dataType: "json",
                             data: {
-                                job_number: function() {
-                                    return $('[name="job_number"]').val();
+                                user_name: function() {
+                                    return $('[name="user_name"]').val();
                                 }
                             }
                         }
@@ -80,8 +80,8 @@
                             type: "post",
                             dataType: 'json',
                             data: {
-                                job_number: function(){
-                                    return $('[name="job_number"]').val();
+                                user_name: function(){
+                                    return $('[name="user_name"]').val();
                                 },
                                 user_psw: function(){
                                     return $('[name="user_psw"]').val();
@@ -91,7 +91,7 @@
                     },
                 },
                 messages:{
-                    job_number:{
+                    user_name:{
                         remote: "用户名不存在",
                         required:"请输入用户名"
                     },

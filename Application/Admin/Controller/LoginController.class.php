@@ -11,7 +11,6 @@ class LoginController extends Controller{
             'user_name' => I('user_name')
         ];
         $user = M('user')->where($cond)->find();
-        p($user);
         if ($user) {
             echo "true";
         } else {
