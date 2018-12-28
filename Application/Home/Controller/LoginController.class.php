@@ -67,9 +67,55 @@ class LoginController extends Controller{
         $memberInfo = M('member') ->where($cond)->find();
 
         if (md5(md5(I('password'))) == $memberInfo['password']) {
+            $data['openid'] = I('openid');
+            M('member')->where($cond)->save($data);
             ajax_return(1, '登录成功', $memberInfo);
         }
         ajax_return(0, '密码错误');
+    }
+
+    /**
+     * 登录凭证校验
+     * @param js_code 登录凭证code
+     */
+    public function code_2_session()
+    {
+        $appid = C('WX_CONFIG.APPID');
+        $secret = C('WX_CONFIG.APPSECRET');
+        $url = 'https://api.weixin.qq.com/sns/jscode2session?appid='.$appid.'&secret='.$secret.'&js_code='.I('js_code').'&grant_type=authorization_code';
+        $info = file_get_contents($url);
+        $json = json_decode($info, true);
+
+        $openid = $json['openid'];
+
+        $cond = [
+            'status' => C('STATUS_Y'),
+            'openid' => $openid
+        ];
+        $memberInfo = M('member')->where($cond)->find();
+
+        $data = [
+            'openid' => $openid,
+            'member' => $memberInfo
+        ];
+
+        ajax_return(1, '凭证校验', $data);
+    }
+
+    /**
+     * 获取公告信息
+     * @param team_uuid
+     */
+    public function get_notice()
+    {
+        $cond = [
+            'team_uuid'   => I('team_uuid'),
+            'expire_time' => array('gt', date('Y-m-d')),
+            'status'      => C('STATUS_Y')
+        ];
+        $data = M('notice')->where($cond)->order('notice_time desc')->limit(1)->find();
+
+        ajax_return(1, '公告信息', $data);
     }
 
 }

@@ -2,6 +2,25 @@
 namespace Home\Controller;
 use Think\Controller;
 class MemberController extends Controller{
+
+    /**
+     * 修改会员信息
+     * @param member_id 会员ID
+     */
+    public function edit_member()
+    {
+        $cond['id'] = I('member_id');
+        $member = D('Member');
+        $member->create();
+        $res = $member->where($cond)->save();
+
+        if ($res === false) {
+            ajax_return(0, '修改会员信息失败');
+        }
+        $memberInfo = $member->where($cond)->find();
+        ajax_return(1, '修改会员信息成功', $memberInfo);
+    }
+
     /**
      * 根据团队获取成员
      * @param team_uuid 团队uuid
