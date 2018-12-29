@@ -331,12 +331,11 @@ class TaskController extends Controller {
      */
     public function complete_task()
     {
-
-
         $cond['id'] = I('task_id');
         $data = [
             'status'        => C('TASK_F'),
-            'complete_time' => date('Y-m-d H:i:s')
+            'complete_time' => date('Y-m-d H:i:s'),
+            'complete_date' => date('Y-m-d')
         ];
         $res = M('task')->where($cond)->save($data);
         if ($res === false) {

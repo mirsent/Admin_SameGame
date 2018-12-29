@@ -50,27 +50,30 @@ class TaskModel extends BaseModel{
             ->alias('t')
             ->join('__PROJECT__ p ON p.id = t.project_id', 'LEFT')
             ->join('__MEMBER__ executive ON executive.id = t.task_executive_id', 'LEFT') // 执行人
-            ->field('t.id,task_name,task_desc,difficult,deadline_time,DATE_FORMAT(deadline_time,"%m/%d") as deadline_date,t.status,project_name,executive.member_name as executive')
+            ->field('t.id,task_name,task_desc,difficult,deadline_time,DATE_FORMAT(deadline_time,"%m/%d") as deadline_date,complete_date,t.status,project_name,executive.member_name as executive')
             ->order('t.status,deadline_time desc')
             ->where($cond)
             ->select();
 
         foreach ($data as $key => $value) {
             $data[$key]['is_delay'] = 0;
-            if ($key == 0) { // 第一个默认展开
+
+            // 第一个默认展开
+            if ($key == 0) {
                 $data[$key]['show'] = true;
             } else {
                 $data[$key]['show'] = false;
             }
+
             if ($value['status'] == C('TASK_F')) {
                 // 已完成
                 $data[$key]['is_finish'] = true;
-                if ($value['complete_time'] > $value['deadline_time']) {
+                if (strtotime($value['complete_date']) > strtotime($value['deadline_time'])) {
                     $data[$key]['is_delay'] = 1;
                 }
             } else {
                 $data[$key]['is_finish'] = false;
-                if (date('Y-m-d H:i:s') > $value['deadline_time']) {
+                if (strtotime(date('Y-m-d')) > strtotime($value['deadline_time'])) {
                     $data[$key]['is_delay'] = 1;
                 }
             }
