@@ -19,4 +19,13 @@ return array(
     'LOG_P' => 1, // 项目记录
     'LOG_T' => 2, // 任务记录
 
+    'WX_CONFIG' => array(
+        'APPID'      => 'wx4af7990f8faed2af',
+        'APPSECRET'  => 'bf678846c87c828fe51f008ffd716baa',
+        'MCHID'      => '',
+        'KEY'        => '',
+        'NOTIFY_URL' => '',
+        'money'      => 1
+    ),
+
 );
