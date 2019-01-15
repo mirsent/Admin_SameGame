@@ -137,7 +137,8 @@
                         project_name: $('.search-project').val(),
                         task_name: $('.search-task').val(),
                         publish_time: $('.search-date-publish').val(),
-                        deadline_time: $('.search-date-deadline').val()
+                        deadline_time: $('.search-date-deadline').val(),
+                        status: $('.search-status').val()
                     };
                     $.ajax({
                         type: "POST",
@@ -183,7 +184,11 @@
                     advancedHtml += '<div class="layui-inline"><input type="text" placeholder="截至日期" class="layui-input picker-date search-date-deadline"></div> ';
                     advancedHtml += '<button type="button" class="btn btn-default" id="advancedSearch"><i class="fa fa-search fa-fw"></i>查询</button></form>';
 
+                    var advancedStatusHtml = '';
+                    advancedStatusHtml += '<div class="layui-form layui-inline"><select class="search-status" lay-filter="status"><option value="">任务状态</option><option value="-1">全部</option><option value="1">进行中</option><option value="2">已完成</option></select></div> ';
+
                     $('.search-item').append(DTSearchGroup);
+                    $('.search-item').prepend(advancedStatusHtml);
                     $('#searchCollapse').append(advancedHtml);
                     layui.use(['form','laydate'], function(){
                         var form = layui.form,
@@ -192,6 +197,9 @@
                             laydate.render({
                                 elem: this
                             });
+                        });
+                        form.on('select(status)', function (data) {
+                            DTReload(oTable);
                         });
                         form.render();
                     })

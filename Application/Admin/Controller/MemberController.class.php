@@ -57,7 +57,7 @@ class MemberController extends AdminBaseController{
             // 创建的团队
             $cond_team_create = [
                 'status'    => C('STATUS_Y'),
-                'member_id' => $memberId
+                'founder_id' => $memberId
             ];
             $teamCreate = $team->getTeamFields($cond_team_create);
             $infos[$key]['team_create'] = implode(',', $teamCreate);

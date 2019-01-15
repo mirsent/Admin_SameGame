@@ -8,11 +8,16 @@ class TaskController extends Controller {
      * 截止时间倒序
      * @param int team_uuid 团队uuid
      * @param task_executive_id 执行人ID
+     *
      * @return show 是否展开
      * @return is_finish 是否完成
      * @return number_all 任务总数量
      * @return number_complete 任务完成数量
      * @return rate 任务完成百分比
+     *
+     * @return today 今日任务
+     *         other 其他任务
+     *         todo 备忘
      */
     public function get_task_list()
     {
@@ -36,12 +41,31 @@ class TaskController extends Controller {
         $todayCompleteN = array_count_values(array_column($todayList, 'status'))[$status]?:0;
         $todayRate = intval($todayCompleteN/$todayAllN*100);
 
+        // 其他任务
         $otherList = $task->getTaskList($cond_other);
         $otherAllN = count($otherList);
         $otherCompleteN = array_count_values(array_column($otherList, 'status'))[$status]?:0;
         $otherRate = intval($otherCompleteN/$otherAllN*100);
 
+        $cond_todo = [
+            'status'            => C('STATUS_Y'),
+            'task_executive_id' => I('task_executive_id')
+        ];
+        $todoList = M('todo')->where($cond_todo)->select();
+        foreach ($todoList as $key => $value) {
+            $todoList[$key]['show'] = false;
+            if ($value['status'] == C('TASK_F')) {
+                // 已完成
+                $todoList[$key]['is_finish'] = true;
+            } else {
+                $todoList[$key]['is_finish'] = false;
+            }
+        }
+
         $data = [
+            'todo' => [
+                'list' => $todoList
+            ],
             'today' => [
                 'list'            => $todayList,
                 'number_all'      => $todayAllN,
@@ -53,7 +77,7 @@ class TaskController extends Controller {
                 'number_all'      => $otherAllN,
                 'number_complete' => $otherCompleteN,
                 'rate'            => $otherRate
-            ],
+            ]
         ];
 
         ajax_return(1, '任务列表', $data);
@@ -179,6 +203,23 @@ class TaskController extends Controller {
             ajax_return(1, '任务详情', $data);
         }
         ajax_return(0, '参数不合法');
+    }
+
+    /**
+     * 发布备忘
+     * @param task_name 名称
+     * @param task_desc 描述
+     */
+    public function add_todo()
+    {
+        $todo = D('Todo');
+        $todo->create();
+        $res = $todo->add();
+
+        if ($res === false) {
+            ajax_return(0, '发布备忘失败');
+        }
+        ajax_return(1, '发布备忘成功');
     }
 
     /**
@@ -331,8 +372,6 @@ class TaskController extends Controller {
      */
     public function complete_task()
     {
-
-
         $cond['id'] = I('task_id');
         $data = [
             'status'        => C('TASK_F'),
@@ -358,6 +397,44 @@ class TaskController extends Controller {
         ];
         $res = M('task')->where($cond)->save($data);
 
+        if ($res === false) {
+            ajax_return(0, '取消完成任务失败');
+        }
+        ajax_return(1, '取消完成任务成功');
+    }
+
+    /**
+     * 完成备忘
+     * @param todo_id
+     */
+    public function complete_todo()
+    {
+        $cond['id'] = I('todo_id');
+        $data = [
+            'status'        => C('TASK_F'),
+            'complete_time' => date('Y-m-d H:i:s'),
+            'complete_date' => date('Y-m-d'),
+        ];
+        $res = M('todo')->where($cond)->save($data);
+        if ($res === false) {
+            ajax_return(0, '完成任务失败');
+        }
+        ajax_return(1, '完成任务成功');
+    }
+
+    /**
+     * 完成备忘
+     * @param todo_id
+     */
+    public function cancel_todo()
+    {
+        $cond['id'] = I('todo_id');
+        $data = [
+            'status'        => C('TASK_I'),
+            'complete_time' => null,
+            'complete_date' => null,
+        ];
+        $res = M('todo')->where($cond)->save($data);
         if ($res === false) {
             ajax_return(0, '取消完成任务失败');
         }

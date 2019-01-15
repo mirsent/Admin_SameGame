@@ -7,9 +7,9 @@ class TaskController extends AdminBaseController{
      */
     public function get_task_info(){
         $ms = D('Task');
-        $cond = [
-            't.status' => C('STATUS_Y')
-        ];
+        $cond = array(
+            't.status' => array('neq', C('STATUS_N'))
+        );
 
         $recordsTotal = $ms->alias('t')->where($cond)->count();
 
@@ -19,6 +19,7 @@ class TaskController extends AdminBaseController{
         $searchTask = I('task_name');
         $searchPublishDate = I('publish_time');
         $searchDeadlineDate = I('deadline_time');
+        $searchStatus = I('status');
         if (strlen($search)>0) {
             $cond['project_name|project_type_name|project_desc'] = array('like', '%'.$search.'%');
         }
@@ -26,6 +27,17 @@ class TaskController extends AdminBaseController{
         if ($searchTask) $cond['task_name'] = $searchTask;
         if ($searchPublishDate) $cond['publish_time'] = array('between', [$searchPublishDate.' 00:00:01', $searchPublishDate.' 23:59:59']);
         if ($searchDeadlineDate) $cond['deadline_time'] = array('between', [$searchDeadlineDate.' 00:00:01', $searchDeadlineDate.' 23:59:59']);
+
+        switch ($searchStatus) {
+            case '1':
+                $cond['t.status'] = C('TASK_I');
+                break;
+            case '2':
+                $cond['t.status'] = C('TASK_F');
+                break;
+            default:
+                break;
+        }
 
         $recordsFiltered = $ms->getTaskNumber($cond);
 

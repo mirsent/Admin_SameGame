@@ -14,7 +14,7 @@ class TaskModel extends BaseModel{
     {
         $data = $this
             ->alias('t')
-            ->join('__PROJECT__ p ON p.id = t.project_id')
+            ->join('__PROJECT__ p ON p.id = t.project_id','LEFT')
             ->join('__MEMBER__ executive ON executive.id = t.task_executive_id') // 执行人
             ->join('__MEMBER__ publisher ON publisher.id = t.task_publisher_id') // 发布人
             ->where($cond)
